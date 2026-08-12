@@ -7,7 +7,12 @@ let socket = null;
 export const initializeSocket = () => {
   if (socket) return socket;
   
+  const token = localStorage.getItem('staynest_token');
+  
   socket = io(SOCKET_URL, {
+    auth: {
+      token: token
+    },
     withCredentials: true,
     autoConnect: true,
   });
