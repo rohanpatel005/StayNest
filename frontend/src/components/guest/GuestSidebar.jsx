@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Compass, Luggage, Heart, MessageCircle, Star, User, Settings, LogOut, Home as HomeIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '../../utils/cn';
+import { messageApi } from '../../api/messageApi';
 
 const navItems = [
   { name: 'Explore', path: '/guest', icon: Compass },
@@ -22,6 +23,20 @@ const GuestSidebar = () => {
   const location = useLocation();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [unreadTotal, setUnreadTotal] = React.useState(0);
+
+  React.useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await messageApi.getConversations();
+        if (res.success) {
+          const total = res.data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+          setUnreadTotal(total);
+        }
+      } catch (err) {}
+    };
+    fetchUnread();
+  }, [location.pathname]); // refetch on navigation
 
   const handleLogout = () => {
     logout();
@@ -52,7 +67,10 @@ const GuestSidebar = () => {
           />
         )}
         <item.icon className={cn("w-5 h-5 relative z-10", active ? "text-brand-500" : "text-gray-400 group-hover:text-gray-600")} />
-        <span className="relative z-10">{item.name}</span>
+        <span className="relative z-10 flex-1">{item.name}</span>
+        {item.name === 'Messages' && unreadTotal > 0 && (
+          <span className="relative z-10 w-2 h-2 rounded-full bg-red-500 shadow-sm" title={`${unreadTotal} unread`} />
+        )}
       </Link>
     );
   };
