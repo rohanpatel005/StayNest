@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); mongoose.connect('mongodb://127.0.0.1:27017/staynest').then(() => mongoose.connection.db.collection('listings').updateOne({}, { $set: { 'location.latitude': 23.0225, 'location.longitude': 72.5714 } })).then(r => console.log(r)).catch(console.error).finally(() => process.exit());

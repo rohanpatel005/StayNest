@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { IndianRupee, House, CalendarCheck, TrendingUp, Star } from 'lucide-react';
 import { hostApi } from '../../api/hostApi';
 import { bookingApi } from '../../api/bookingApi';
@@ -140,31 +141,34 @@ const HostDashboard = () => {
           ) : (
             <div className="flex-1 flex flex-col gap-4 overflow-y-auto pr-2">
               {recentBookings.map((booking) => (
-                <div key={booking._id} className="flex gap-4 items-center p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
-                    {booking.guest?.profileImage ? (
-                      <img src={booking.guest.profileImage} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold text-sm">
-                        {booking.guest?.name?.charAt(0) || '?'}
+                <Link to={`/host/bookings/${booking._id}`} key={booking._id}>
+                  <div className="flex gap-4 items-center p-3 hover:bg-gray-50 rounded-xl transition-colors border border-transparent hover:border-gray-100">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 shrink-0 overflow-hidden">
+                      {booking.guest?.profileImage ? (
+                        <img src={booking.guest.profileImage} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-600 font-bold text-sm">
+                          {booking.guest?.name?.charAt(0) || '?'}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-gray-900 truncate">{booking.guest?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{booking.listing?.title}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="text-sm font-bold text-gray-900">₹{booking.pricing?.totalAmount?.toLocaleString() || 0}</div>
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${
+                        booking.status === 'CONFIRMED' ? 'text-emerald-500' :
+                        booking.status === 'PENDING_PAYMENT' ? 'text-orange-500' :
+                        booking.status === 'COMPLETED' ? 'text-blue-500' :
+                        'text-gray-500'
+                      }`}>
+                        {booking.status}
                       </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-gray-900 truncate">{booking.guest?.name}</p>
-                    <p className="text-xs text-gray-500 truncate">{booking.listing?.title}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-sm font-bold text-gray-900">₹{booking.pricing?.totalAmount?.toLocaleString() || 0}</div>
-                    <div className={`text-[10px] font-bold uppercase tracking-wider ${
-                      booking.status === 'confirmed' ? 'text-emerald-500' :
-                      booking.status === 'pending' ? 'text-orange-500' :
-                      'text-gray-500'
-                    }`}>
-                      {booking.status}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

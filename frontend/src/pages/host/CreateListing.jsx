@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, CheckCircle2, House, MapPin, Users, Wifi, Image as ImageIcon, IndianRupee, Calendar, Trash2 } from 'lucide-react';
 import { listingApi } from '../../api/listingApi';
+import LocationPicker from '../../components/map/LocationPicker';
 
 const CreateListing = () => {
   const navigate = useNavigate();
@@ -19,12 +20,14 @@ const CreateListing = () => {
     title: '',
     description: '',
     propertyType: 'Entire Place',
-    location: { country: '', state: '', city: '', address: '', postalCode: '' },
+    location: { country: '', state: '', city: '', address: '', postalCode: '', latitude: null, longitude: null },
     capacity: { guests: 1, bedrooms: 0, beds: 1, bathrooms: 0 },
     amenities: [],
     images: [{ url: '', isPrimary: true }],
     pricing: { perNight: 1000, cleaningFee: 0, serviceFee: 0 },
-    availability: { minNights: 1, maxNights: 30 }
+    availability: { minNights: 1, maxNights: 30 },
+    checkInTime: '',
+    checkOutTime: ''
   });
 
   const steps = [
@@ -149,9 +152,9 @@ const CreateListing = () => {
       if (Object.keys(errors).length > 0) return setValidationErrors(errors);
     }
     if (currentStep === 1) {
-      const { country, state, city, address, postalCode } = formData.location;
-      if (!country.trim() || !state.trim() || !city.trim() || !address.trim() || !postalCode.trim()) {
-        return setValidationErrors({ location: 'Please fill out all location fields.' });
+      const { country, state, city, address, latitude, longitude } = formData.location;
+      if (!address || !latitude || !longitude) {
+        return setValidationErrors({ location: 'Please select a valid location on the map.' });
       }
     }
     if (currentStep === 3) {
@@ -170,6 +173,9 @@ const CreateListing = () => {
     if (currentStep === 6) {
       if (formData.availability.maxNights < formData.availability.minNights) {
         return setValidationErrors({ availability: 'Maximum nights cannot be less than minimum nights.' });
+      }
+      if (!formData.checkInTime || !formData.checkOutTime) {
+        return setValidationErrors({ time: 'Please select both check-in and check-out times.' });
       }
     }
 
@@ -250,14 +256,15 @@ const CreateListing = () => {
       case 1: return (
         <div className="space-y-6">
           <h2 className="text-2xl font-bold">Where is your place located?</h2>
+          <p className="text-gray-500 text-sm mb-4">Your location helps guests discover your property.</p>
           {validationErrors.location && <p className="text-red-500 text-sm mb-2">{validationErrors.location}</p>}
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-bold mb-2">Country</label><input type="text" name="country" value={formData.location.country} onChange={e => handleChange(e, 'location')} className="w-full p-4 border rounded-xl" /></div>
-            <div><label className="block text-sm font-bold mb-2">State</label><input type="text" name="state" value={formData.location.state} onChange={e => handleChange(e, 'location')} className="w-full p-4 border rounded-xl" /></div>
-            <div><label className="block text-sm font-bold mb-2">City</label><input type="text" name="city" value={formData.location.city} onChange={e => handleChange(e, 'location')} className="w-full p-4 border rounded-xl" /></div>
-            <div><label className="block text-sm font-bold mb-2">Postal Code</label><input type="text" name="postalCode" value={formData.location.postalCode} onChange={e => handleChange(e, 'location')} className="w-full p-4 border rounded-xl" /></div>
-            <div className="col-span-2"><label className="block text-sm font-bold mb-2">Street Address</label><input type="text" name="address" value={formData.location.address} onChange={e => handleChange(e, 'location')} className="w-full p-4 border rounded-xl" /></div>
-          </div>
+          <LocationPicker 
+            initialLocation={formData.location.latitude ? formData.location : null}
+            onLocationSelect={(locationObj) => {
+              setFormData({ ...formData, location: locationObj });
+              setValidationErrors({});
+            }}
+          />
         </div>
       );
       case 2: return (
@@ -377,6 +384,31 @@ const CreateListing = () => {
                 <span className="w-6 text-center">{formData.availability.maxNights}</span>
                 <button onClick={() => handleNumberChange('availability', 'maxNights', 1)} className="w-8 h-8 rounded-full border flex items-center justify-center hover:border-gray-900">+</button>
               </div>
+            </div>
+          </div>
+          
+          <h3 className="text-xl font-bold mt-8 mb-4">Check-in / Check-out Times</h3>
+          {validationErrors.time && <p className="text-red-500 text-sm mb-2">{validationErrors.time}</p>}
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-bold mb-2">Check-in Time</label>
+              <input 
+                type="time" 
+                name="checkInTime" 
+                value={formData.checkInTime} 
+                onChange={handleChange} 
+                className="w-full p-4 border rounded-xl" 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-2">Check-out Time</label>
+              <input 
+                type="time" 
+                name="checkOutTime" 
+                value={formData.checkOutTime} 
+                onChange={handleChange} 
+                className="w-full p-4 border rounded-xl" 
+              />
             </div>
           </div>
         </div>

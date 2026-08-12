@@ -58,6 +58,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/reviews', require('./routes/sharedReviewRoutes'));
+app.use('/api/bookings/:bookingId/receipt', require('./routes/receiptRoutes'));
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {

@@ -82,6 +82,13 @@ exports.verifyPayment = async (req, res) => {
     booking.status = 'CONFIRMED';
     booking.paymentStatus = 'PAID';
     booking.paymentReference = payment._id;
+    
+    // Generate receipt number on successful payment
+    if (!booking.receiptNumber) {
+      booking.receiptNumber = `RCPT-${Date.now()}-${booking._id.toString().substring(0, 6).toUpperCase()}`;
+      booking.receiptStatus = 'PENDING'; // PDF can be generated on demand
+    }
+    
     await booking.save();
 
     res.status(200).json({ success: true, message: 'Payment verified and booking confirmed', data: booking });

@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { fadeUp } from '../../animations/motionVariants';
 import { cn } from '../../utils/cn';
 
-const GuestListingCard = ({ property, onToggleWishlist, isWishlisted = false }) => {
+const GuestListingCard = ({ property, onToggleWishlist, isWishlisted = false, numberOfNights, searchParams }) => {
   const [favorite, setFavorite] = useState(isWishlisted);
 
   const handleFavoriteClick = async (e) => {
@@ -23,9 +23,20 @@ const GuestListingCard = ({ property, onToggleWishlist, isWishlisted = false }) 
   const location = `${property.location?.city || ''}, ${property.location?.country || ''}`;
   const price = property.pricing?.perNight || 0;
   const rating = property.rating?.average || 'New';
+  
+  let linkTo = `/property/${property._id}`;
+  if (searchParams) {
+    const query = new URLSearchParams();
+    if (searchParams.checkIn) query.append('checkIn', searchParams.checkIn);
+    if (searchParams.checkOut) query.append('checkOut', searchParams.checkOut);
+    if (searchParams.guests) query.append('guests', searchParams.guests);
+    if (query.toString()) {
+      linkTo += `?${query.toString()}`;
+    }
+  }
 
   return (
-    <Link to={`/property/${property._id}`}>
+    <Link to={linkTo}>
       <motion.div 
         variants={fadeUp}
         className="group flex flex-col gap-3 cursor-pointer"
@@ -67,10 +78,23 @@ const GuestListingCard = ({ property, onToggleWishlist, isWishlisted = false }) 
           <div className="mt-1 text-gray-500 text-sm">
             {property.capacity?.guests} guests · {property.capacity?.bedrooms} beds
           </div>
-          <div className="mt-2 flex items-baseline gap-1">
-            <span className="font-semibold text-gray-900">${price}</span>
-            <span className="text-gray-500 text-sm">night</span>
-          </div>
+          {numberOfNights > 0 ? (
+            <div className="mt-2 flex flex-col">
+              <span className="font-semibold text-gray-900 border-b border-gray-900 w-max pb-0.5 mb-1">
+                ₹{(price * numberOfNights).toLocaleString()} total
+              </span>
+              <div className="flex items-baseline gap-1 text-gray-500 text-sm">
+                <span>₹{price.toLocaleString()}</span>
+                <span>night</span>
+                <span>· {numberOfNights} nights</span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2 flex items-baseline gap-1">
+              <span className="font-semibold text-gray-900">₹{price.toLocaleString()}</span>
+              <span className="text-gray-500 text-sm">night</span>
+            </div>
+          )}
         </div>
       </motion.div>
     </Link>

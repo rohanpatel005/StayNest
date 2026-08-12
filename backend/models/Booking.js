@@ -77,6 +77,19 @@ const bookingSchema = new mongoose.Schema(
     cancelledAt: {
       type: Date,
     },
+    receiptNumber: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null/missing values while ensuring uniqueness for generated receipts
+    },
+    receiptGeneratedAt: {
+      type: Date,
+    },
+    receiptStatus: {
+      type: String,
+      enum: ['PENDING', 'GENERATED'],
+      default: 'PENDING',
+    },
   },
   { timestamps: true }
 );

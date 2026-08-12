@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { listingApi } from '../../api/listingApi';
+import LocationPicker from '../../components/map/LocationPicker';
 
 const AMENITIES_LIST = [
   'WiFi', 'TV', 'Kitchen', 'Workspace', 'Air Conditioning',
@@ -28,6 +29,9 @@ const EditListing = () => {
     description: '',
     status: 'draft',
     amenities: [],
+    location: null,
+    checkInTime: '',
+    checkOutTime: '',
   });
 
   // Images state
@@ -61,6 +65,9 @@ const EditListing = () => {
           description: data.description,
           status: data.status,
           amenities: data.amenities || [],
+          location: data.location || null,
+          checkInTime: data.checkInTime || '',
+          checkOutTime: data.checkOutTime || '',
         });
         setImages(data.images || []);
         setBlockedDates(data.availability?.blockedDates || []);
@@ -180,6 +187,7 @@ const EditListing = () => {
         title: formData.title,
         propertyType: formData.propertyType,
         description: formData.description,
+        location: formData.location,
         capacity: {
           ...listing.capacity,
           guests: parseInt(formData.guests),
@@ -193,6 +201,8 @@ const EditListing = () => {
         },
         amenities: formData.amenities,
         status: formData.status,
+        checkInTime: formData.checkInTime,
+        checkOutTime: formData.checkOutTime,
       };
 
       const res = await listingApi.updateListing(listingId, payload);
@@ -306,6 +316,23 @@ const EditListing = () => {
               />
             </div>
           </div>
+        </section>
+
+        {/* SECTION 1.5: Location */}
+        <section className="space-y-6">
+          <h2 className="text-2xl font-semibold border-b pb-2">Location</h2>
+          {formData.location ? (
+            <LocationPicker 
+              initialLocation={formData.location}
+              onLocationSelect={(locationObj) => {
+                setFormData(prev => ({ ...prev, location: locationObj }));
+              }}
+            />
+          ) : (
+            <div className="h-64 flex items-center justify-center bg-gray-50 border rounded-lg">
+              <span className="text-gray-500">Loading location map...</span>
+            </div>
+          )}
         </section>
 
         {/* SECTION 2: Pricing */}
@@ -482,6 +509,33 @@ const EditListing = () => {
                 </ul>
               </div>
             )}
+          </div>
+
+          {/* Check-in / Check-out Times */}
+          <div className="bg-gray-50 p-6 rounded-lg mt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Check-in & Check-out Times</h3>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Check-in Time</label>
+                <input
+                  type="time"
+                  name="checkInTime"
+                  value={formData.checkInTime}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg focus:ring-rose-500 focus:border-rose-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Check-out Time</label>
+                <input
+                  type="time"
+                  name="checkOutTime"
+                  value={formData.checkOutTime}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg focus:ring-rose-500 focus:border-rose-500"
+                />
+              </div>
+            </div>
           </div>
         </section>
 

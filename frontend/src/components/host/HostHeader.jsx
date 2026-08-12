@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Menu, Search } from 'lucide-react';
+import { Bell, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const HostHeader = () => {
@@ -23,16 +23,6 @@ const HostHeader = () => {
       {/* Right side controls */}
       <div className="flex items-center gap-4 ml-auto lg:ml-0">
         
-        {/* Search (Optional/Decorative for now) */}
-        <div className="hidden md:flex items-center relative">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3" />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all w-48 lg:w-64"
-          />
-        </div>
-
         {/* Notifications */}
         <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
           <Bell className="w-5 h-5" />

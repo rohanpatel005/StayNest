@@ -7,6 +7,7 @@ import { messageApi } from '../../api/messageApi';
 import PageLoader from '../../components/PageLoader/PageLoader';
 import { staggerContainer, fadeUp } from '../../animations/motionVariants';
 import CancelBookingModal from '../../components/CancelBookingModal/CancelBookingModal';
+import { formatTimeToAMPM } from '../../utils/timeUtils';
 
 const Trips = () => {
   const [trips, setTrips] = useState([]);
@@ -15,6 +16,7 @@ const Trips = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState(null);
   const navigate = useNavigate();
 
   const fetchTrips = async () => {
@@ -52,6 +54,27 @@ const Trips = () => {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to start conversation');
+    }
+  };
+
+  const handleDownloadReceipt = async (bookingId) => {
+    try {
+      setDownloadingReceiptId(bookingId);
+      const blob = await guestApi.downloadReceipt(bookingId);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Receipt-${bookingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Unable to download receipt. Please try again.');
+    } finally {
+      setDownloadingReceiptId(null);
     }
   };
 
@@ -151,11 +174,17 @@ const Trips = () => {
                     <div className="flex justify-between items-center text-sm border-t border-gray-100 pt-4">
                       <div>
                         <p className="text-gray-500">Check-in</p>
-                        <p className="font-semibold text-gray-900">{new Date(trip.checkIn).toLocaleDateString()}</p>
+                        <p className="font-semibold text-gray-900">
+                          {new Date(trip.checkIn).toLocaleDateString()}
+                          {property?.checkInTime && ` · ${formatTimeToAMPM(property.checkInTime)}`}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="text-gray-500">Checkout</p>
-                        <p className="font-semibold text-gray-900">{new Date(trip.checkOut).toLocaleDateString()}</p>
+                        <p className="font-semibold text-gray-900">
+                          {new Date(trip.checkOut).toLocaleDateString()}
+                          {property?.checkOutTime && ` · ${formatTimeToAMPM(property.checkOutTime)}`}
+                        </p>
                       </div>
                     </div>
                     
@@ -179,6 +208,16 @@ const Trips = () => {
                         View Place
                       </button>
                       
+                      {(trip.status === 'CONFIRMED' || trip.status === 'COMPLETED') && trip.paymentStatus === 'PAID' && (
+                        <button 
+                          onClick={() => handleDownloadReceipt(trip._id)}
+                          disabled={downloadingReceiptId === trip._id}
+                          className="flex-1 py-2 bg-emerald-50 text-emerald-700 font-semibold rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200 text-sm disabled:opacity-50"
+                        >
+                          {downloadingReceiptId === trip._id ? 'Generating...' : 'Receipt'}
+                        </button>
+                      )}
+
                       {canCancel && (
                         <button 
                           onClick={() => handleMessageHost(trip._id)}
@@ -211,7 +250,7 @@ const Trips = () => {
             Find a stay for your next trip and start exploring the world.
           </p>
           <button 
-            onClick={() => navigate('/guest/search')}
+            onClick={() => navigate('/search')}
             className="px-6 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition-colors"
           >
             Explore Stays

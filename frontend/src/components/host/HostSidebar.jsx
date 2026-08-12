@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, House, CalendarDays, Wallet, Star, User, Settings, LogOut, Home as HomeIcon, MessageCircle } from 'lucide-react';

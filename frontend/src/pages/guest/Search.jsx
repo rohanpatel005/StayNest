@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search as SearchIcon, Filter, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import api from '../../api/axios';
 import GuestListingCard from '../../components/guest/GuestListingCard';
 import PageLoader from '../../components/PageLoader/PageLoader';
@@ -8,8 +9,12 @@ import { staggerContainer, fadeUp } from '../../animations/motionVariants';
 import { guestApi } from '../../api/guestApi';
 
 const Search = () => {
+  const locationObj = useLocation();
+
   const [searchParams, setSearchParams] = useState({
     location: '',
+    checkIn: '',
+    checkOut: '',
     guests: 1,
     minPrice: '',
     maxPrice: ''
@@ -21,6 +26,25 @@ const Search = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState(null);
 
+  // Initialize search from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(locationObj.search);
+    const initialParams = {
+      location: params.get('location') || '',
+      checkIn: params.get('checkIn') || '',
+      checkOut: params.get('checkOut') || '',
+      guests: params.get('guests') || 1,
+      minPrice: params.get('minPrice') || '',
+      maxPrice: params.get('maxPrice') || ''
+    };
+    setSearchParams(initialParams);
+    
+    // Auto trigger search if parameters exist
+    if (params.toString().length > 0) {
+      handleSearch(null, initialParams);
+    }
+  }, [locationObj.search]);
+
   // Load wishlist so hearts work correctly
   useEffect(() => {
     guestApi.getWishlist().then(res => {
@@ -28,17 +52,20 @@ const Search = () => {
     }).catch(() => {});
   }, []);
 
-  const handleSearch = async (e) => {
+  const handleSearch = async (e, overrideParams = null) => {
     if (e) e.preventDefault();
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
     try {
+      const paramsToUse = overrideParams || searchParams;
       const queryParams = new URLSearchParams();
-      if (searchParams.location) queryParams.append('location', searchParams.location);
-      if (searchParams.guests) queryParams.append('guests', searchParams.guests);
-      if (searchParams.minPrice) queryParams.append('minPrice', searchParams.minPrice);
-      if (searchParams.maxPrice) queryParams.append('maxPrice', searchParams.maxPrice);
+      if (paramsToUse.location) queryParams.append('location', paramsToUse.location);
+      if (paramsToUse.checkIn) queryParams.append('checkIn', paramsToUse.checkIn);
+      if (paramsToUse.checkOut) queryParams.append('checkOut', paramsToUse.checkOut);
+      if (paramsToUse.guests) queryParams.append('guests', paramsToUse.guests);
+      if (paramsToUse.minPrice) queryParams.append('minPrice', paramsToUse.minPrice);
+      if (paramsToUse.maxPrice) queryParams.append('maxPrice', paramsToUse.maxPrice);
 
       const res = await api.get(`/listings/search?${queryParams.toString()}`);
       setResults(res.data.data.listings || []);
@@ -48,6 +75,20 @@ const Search = () => {
       setIsLoading(false);
     }
   };
+
+  const calculateNights = (checkInStr, checkOutStr) => {
+    if (!checkInStr || !checkOutStr) return null;
+    const start = new Date(checkInStr);
+    const end = new Date(checkOutStr);
+    if (start >= end) return null;
+    return Math.round((end - start) / (1000 * 60 * 60 * 24));
+  };
+
+  const numberOfNights = calculateNights(searchParams.checkIn, searchParams.checkOut);
+  const today = new Date().toISOString().split('T')[0];
+  const minCheckOut = searchParams.checkIn 
+    ? new Date(new Date(searchParams.checkIn).getTime() + 86400000).toISOString().split('T')[0]
+    : new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   const handleToggleWishlist = async (listingId, isAdding) => {
     try {
@@ -72,54 +113,88 @@ const Search = () => {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white p-4 md:p-6 rounded-3xl border border-gray-200 shadow-sm"
       >
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="flex-1 w-full">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Where</label>
-            <input 
-              type="text" 
-              placeholder="Destination" 
-              value={searchParams.location}
-              onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
+        <form onSubmit={(e) => handleSearch(e)} className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="flex-1 w-full">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Where</label>
+              <input 
+                type="text" 
+                placeholder="Destination" 
+                value={searchParams.location}
+                onChange={(e) => setSearchParams({...searchParams, location: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Check-in</label>
+              <input 
+                type="date"
+                min={today}
+                value={searchParams.checkIn}
+                onChange={(e) => {
+                  const newCheckIn = e.target.value;
+                  setSearchParams(prev => {
+                    const next = { ...prev, checkIn: newCheckIn };
+                    if (next.checkOut && new Date(newCheckIn) >= new Date(next.checkOut)) {
+                      next.checkOut = '';
+                    }
+                    return next;
+                  });
+                }}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="w-full md:w-48">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Check-out</label>
+              <input 
+                type="date"
+                min={minCheckOut}
+                value={searchParams.checkOut}
+                onChange={(e) => setSearchParams({...searchParams, checkOut: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="w-full md:w-32">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Guests</label>
+              <input 
+                type="number" 
+                min="1"
+                value={searchParams.guests}
+                onChange={(e) => setSearchParams({...searchParams, guests: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
           </div>
-          <div className="w-full md:w-32">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Guests</label>
-            <input 
-              type="number" 
-              min="1"
-              value={searchParams.guests}
-              onChange={(e) => setSearchParams({...searchParams, guests: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
+          <div className="flex flex-col md:flex-row gap-4 items-end">
+            <div className="w-full md:w-32">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Min Price</label>
+              <input 
+                type="number" 
+                placeholder="₹0"
+                value={searchParams.minPrice}
+                onChange={(e) => setSearchParams({...searchParams, minPrice: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="w-full md:w-32">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Max Price</label>
+              <input 
+                type="number" 
+                placeholder="₹15000"
+                value={searchParams.maxPrice}
+                onChange={(e) => setSearchParams({...searchParams, maxPrice: e.target.value})}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
+              />
+            </div>
+            <div className="flex-1"></div>
+            <button 
+              type="submit"
+              className="w-full md:w-auto px-8 py-3 bg-brand-500 text-white font-bold rounded-xl hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
+            >
+              <SearchIcon className="w-5 h-5" />
+              Search
+            </button>
           </div>
-          <div className="w-full md:w-32">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Min Price</label>
-            <input 
-              type="number" 
-              placeholder="₹0"
-              value={searchParams.minPrice}
-              onChange={(e) => setSearchParams({...searchParams, minPrice: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-          <div className="w-full md:w-32">
-            <label className="block text-sm font-bold text-gray-700 mb-1">Max Price</label>
-            <input 
-              type="number" 
-              placeholder="₹15000"
-              value={searchParams.maxPrice}
-              onChange={(e) => setSearchParams({...searchParams, maxPrice: e.target.value})}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
-            />
-          </div>
-          <button 
-            type="submit"
-            className="w-full md:w-auto px-8 py-3 bg-brand-500 text-white font-bold rounded-xl hover:bg-brand-600 transition-colors flex items-center justify-center gap-2"
-          >
-            <SearchIcon className="w-5 h-5" />
-            Search
-          </button>
         </form>
       </motion.div>
 
@@ -163,12 +238,14 @@ const Search = () => {
         ) : (
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {results.map(property => (
-              <GuestListingCard 
-                key={property._id} 
-                property={property} 
-                isWishlisted={wishlist.includes(property._id)}
-                onToggleWishlist={handleToggleWishlist}
-              />
+                <GuestListingCard 
+                  key={property._id} 
+                  property={property} 
+                  isWishlisted={wishlist.includes(property._id)}
+                  onToggleWishlist={handleToggleWishlist}
+                  numberOfNights={numberOfNights}
+                  searchParams={searchParams}
+                />
             ))}
           </motion.div>
         )}

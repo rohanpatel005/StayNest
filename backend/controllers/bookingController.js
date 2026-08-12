@@ -40,11 +40,13 @@ exports.getBookings = async (req, res) => {
 
 exports.getRecentBookings = async (req, res) => {
   try {
+    const limit = parseInt(req.query.limit) || 4;
+    
     const bookings = await Booking.find({ host: req.user._id })
-      .populate('guest', 'name email')
-      .populate('listing', 'title')
+      .populate('guest', 'name email profileImage')
+      .populate('listing', 'title images')
       .sort('-createdAt')
-      .limit(5);
+      .limit(limit);
 
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {

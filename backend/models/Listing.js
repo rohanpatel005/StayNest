@@ -27,6 +27,8 @@ const listingSchema = new mongoose.Schema(
       city: { type: String, required: true },
       address: { type: String, required: true },
       postalCode: { type: String, required: true },
+      latitude: { type: Number, required: true, min: -90, max: 90 },
+      longitude: { type: Number, required: true, min: -180, max: 180 },
     },
     capacity: {
       guests: { type: Number, required: true, min: 1 },
@@ -68,6 +70,14 @@ const listingSchema = new mongoose.Schema(
       type: String,
       enum: ['draft', 'published', 'unpublished'],
       default: 'draft',
+    },
+    checkInTime: {
+      type: String,
+      trim: true,
+    },
+    checkOutTime: {
+      type: String,
+      trim: true,
     },
     rating: {
       average: { type: Number, default: 0 },

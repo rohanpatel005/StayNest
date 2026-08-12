@@ -5,11 +5,13 @@ import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import PageLoader from '../../components/PageLoader/PageLoader';
 import { fadeUp, staggerContainer } from '../../animations/motionVariants';
+import { formatTimeToAMPM } from '../../utils/timeUtils';
 
 const BookingSuccess = () => {
   const { id } = useParams();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,6 +32,27 @@ const BookingSuccess = () => {
     fetchBooking();
   }, [id, navigate]);
 
+  const handleDownloadReceipt = async (bookingId) => {
+    try {
+      setIsDownloading(true);
+      const blob = await guestApi.downloadReceipt(bookingId);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Receipt-${bookingId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Unable to download receipt. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (loading) return <PageLoader />;
   if (!booking) return null;
 
@@ -47,11 +70,17 @@ const BookingSuccess = () => {
         <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
           <div>
             <p className="text-gray-500 uppercase text-xs font-bold mb-1">Check-in</p>
-            <p>{new Date(booking.checkIn).toLocaleDateString()}</p>
+            <p>
+              {new Date(booking.checkIn).toLocaleDateString()}
+              {booking.listing?.checkInTime && `, ${formatTimeToAMPM(booking.listing.checkInTime)}`}
+            </p>
           </div>
           <div>
             <p className="text-gray-500 uppercase text-xs font-bold mb-1">Check-out</p>
-            <p>{new Date(booking.checkOut).toLocaleDateString()}</p>
+            <p>
+              {new Date(booking.checkOut).toLocaleDateString()}
+              {booking.listing?.checkOutTime && `, ${formatTimeToAMPM(booking.listing.checkOutTime)}`}
+            </p>
           </div>
           <div>
             <p className="text-gray-500 uppercase text-xs font-bold mb-1">Guests</p>
@@ -62,8 +91,17 @@ const BookingSuccess = () => {
             <p className="font-bold">${booking.pricing?.totalAmount}</p>
           </div>
         </div>
-        <div className="mt-6 pt-6 border-t border-gray-100">
+        <div className="mt-6 pt-6 border-t border-gray-100 flex justify-between items-center">
           <p className="text-gray-500 text-xs">Booking ID: {booking._id}</p>
+          {(booking.status === 'CONFIRMED' || booking.status === 'COMPLETED') && booking.paymentStatus === 'PAID' && (
+            <button 
+              onClick={() => handleDownloadReceipt(booking._id)}
+              disabled={isDownloading}
+              className="px-4 py-2 bg-emerald-50 text-emerald-700 font-semibold rounded-lg hover:bg-emerald-100 transition-colors border border-emerald-200 text-sm disabled:opacity-50"
+            >
+              {isDownloading ? 'Generating...' : 'Download Receipt'}
+            </button>
+          )}
         </div>
       </motion.div>
 

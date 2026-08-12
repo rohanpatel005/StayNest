@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MapPin, Star, MoreVertical, Edit2, Eye, Trash2, House } from 'lucide-react';
+import { Plus, MapPin, Star, MoreVertical, Edit2, Eye, Trash2, House, Clock } from 'lucide-react';
 import { listingApi } from '../../api/listingApi';
 import { fadeUp, staggerContainer } from '../../animations/motionVariants';
+import { formatTimeToAMPM } from '../../utils/timeUtils';
 
 const HostListings = () => {
   const [listings, setListings] = useState([]);
@@ -182,6 +183,17 @@ const HostListings = () => {
                   <div className="flex items-center gap-1 text-gray-500 text-sm mb-3">
                     <MapPin className="w-3.5 h-3.5" />
                     <span className="truncate">{listing.location?.city}, {listing.location?.country}</span>
+                  </div>
+
+                  <div className="text-sm text-gray-600 mb-2 bg-gray-50 p-2 rounded-lg">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Check-in:</span>
+                      <span className="font-medium text-gray-800">{listing.checkInTime ? formatTimeToAMPM(listing.checkInTime) : 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-gray-500">Check-out:</span>
+                      <span className="font-medium text-gray-800">{listing.checkOutTime ? formatTimeToAMPM(listing.checkOutTime) : 'Not specified'}</span>
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-50">

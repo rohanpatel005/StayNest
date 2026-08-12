@@ -15,8 +15,7 @@ const navItems = [
 ];
 
 const secondaryItems = [
-  { name: 'Profile', path: '/profile', icon: User },
-  { name: 'Settings', path: '/settings', icon: Settings },
+  { name: 'Profile', path: '/guest/profile', icon: User },
 ];
 
 const GuestSidebar = () => {

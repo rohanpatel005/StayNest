@@ -6,8 +6,8 @@ export const bookingApi = {
     return response.data;
   },
 
-  getRecentBookings: async () => {
-    const response = await api.get('/host/bookings/recent');
+  getRecentBookings: async (limit = 4) => {
+    const response = await api.get(`/host/bookings/recent?limit=${limit}`);
     return response.data;
   },
 

@@ -36,10 +36,10 @@ const GuestHeader = () => {
   if (location.pathname.startsWith('/guest/messages')) subtitle = "Stay connected with your hosts.";
   if (location.pathname.startsWith('/guest/reviews')) subtitle = "Share your travel experiences.";
   if (location.pathname.startsWith('/property')) subtitle = "Property details.";
-  if (location.pathname.startsWith('/guest/search')) subtitle = "Search results.";
+  if (location.pathname.startsWith('/search')) subtitle = "Search results.";
 
   const handleSearchClick = () => {
-    navigate('/guest/search');
+    navigate('/search');
   };
 
   return (

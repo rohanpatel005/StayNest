@@ -1,4 +1,5 @@
 const Listing = require('../models/Listing');
+const Booking = require('../models/Booking');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
@@ -54,6 +55,24 @@ exports.createListing = async (req, res) => {
     // Inject the authenticated user as the host
     req.body.host = req.user._id;
 
+    // Validate coordinates explicitly
+    const { latitude, longitude, address } = req.body.location || {};
+    if (!latitude || !longitude || !address) {
+      return res.status(400).json({ success: false, message: 'Please select a valid location.' });
+    }
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      return res.status(400).json({ success: false, message: 'Invalid coordinates provided.' });
+    }
+
+    // Validate times
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (req.body.checkInTime && !timeRegex.test(req.body.checkInTime)) {
+      return res.status(400).json({ success: false, message: 'Invalid check-in time.' });
+    }
+    if (req.body.checkOutTime && !timeRegex.test(req.body.checkOutTime)) {
+      return res.status(400).json({ success: false, message: 'Invalid check-out time.' });
+    }
+
     const listing = await Listing.create(req.body);
 
     res.status(201).json({ success: true, data: listing });
@@ -68,6 +87,25 @@ exports.updateListing = async (req, res) => {
     // Ensure host cannot change ownership
     if (req.body.host) {
       delete req.body.host;
+    }
+
+    if (req.body.location) {
+      const { latitude, longitude, address } = req.body.location;
+      if (latitude === undefined || longitude === undefined || !address) {
+        return res.status(400).json({ success: false, message: 'Please select a valid location.' });
+      }
+      if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return res.status(400).json({ success: false, message: 'Invalid coordinates provided.' });
+      }
+    }
+
+    // Validate times
+    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (req.body.checkInTime && !timeRegex.test(req.body.checkInTime)) {
+      return res.status(400).json({ success: false, message: 'Invalid check-in time.' });
+    }
+    if (req.body.checkOutTime && !timeRegex.test(req.body.checkOutTime)) {
+      return res.status(400).json({ success: false, message: 'Invalid check-out time.' });
     }
 
     let listing = await Listing.findOne({ _id: req.params.id, host: req.user._id });
@@ -206,8 +244,27 @@ exports.searchListings = async (req, res) => {
       query.amenities = { $all: amenitiesArr };
     }
 
-    // Availability checking (simplified: doesn't physically check Booking overlapping yet, but sets up architecture)
-    // To do true overlapping checks, we would need to find Bookings, map listingIds, and use $nin
+    // Availability checking
+    if (req.query.checkIn && req.query.checkOut) {
+      const searchCheckIn = new Date(req.query.checkIn);
+      const searchCheckOut = new Date(req.query.checkOut);
+      
+      // Find bookings that overlap with the requested dates
+      // Overlap condition: booking.checkIn < searchCheckOut AND booking.checkOut > searchCheckIn
+      const overlappingBookings = await Booking.find({
+        status: { $in: ['CONFIRMED', 'COMPLETED', 'PENDING_PAYMENT'] },
+        $and: [
+          { checkIn: { $lt: searchCheckOut } },
+          { checkOut: { $gt: searchCheckIn } }
+        ]
+      }).select('listing');
+      
+      const bookedListingIds = overlappingBookings.map(b => b.listing);
+      
+      if (bookedListingIds.length > 0) {
+        query._id = { $nin: bookedListingIds };
+      }
+    }
 
     const listings = await Listing.find(query)
       .skip(startIndex)

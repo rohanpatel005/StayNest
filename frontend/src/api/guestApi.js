@@ -15,6 +15,13 @@ export const guestApi = {
     const response = await api.get(`/guest/bookings/${id}`);
     return response.data;
   },
+
+  downloadReceipt: async (bookingId) => {
+    const response = await api.get(`/bookings/${bookingId}/receipt/download`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
   
   getWishlist: async () => {
     const response = await api.get('/guest/wishlist');

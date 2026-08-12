@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, MapPin, Users, Bed, Bath, Home, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, MapPin, Users, Bed, Bath, Home, ChevronLeft, ChevronRight, X, Heart, Share, Calendar } from 'lucide-react';
 import api from '../../api/axios';
 import { guestApi } from '../../api/guestApi';
 import { paymentApi } from '../../api/paymentApi';
 import PageLoader from '../../components/PageLoader/PageLoader';
 import { staggerContainer, fadeUp } from '../../animations/motionVariants';
+import PropertyMap from '../../components/map/PropertyMap';
+import { formatTimeToAMPM } from '../../utils/timeUtils';
 
 const loadScript = (src) => {
   return new Promise((resolve) => {
@@ -21,14 +23,22 @@ const loadScript = (src) => {
 const PropertyDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const locationObj = useLocation();
+
   const [property, setProperty] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Parse URL params for initial state
+  const params = new URLSearchParams(locationObj.search);
+  const initialCheckIn = params.get('checkIn') || '';
+  const initialCheckOut = params.get('checkOut') || '';
+  const initialGuests = parseInt(params.get('guests')) || 1;
+
   // Booking Card State
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
-  const [guests, setGuests] = useState(1);
+  const [checkIn, setCheckIn] = useState(initialCheckIn);
+  const [checkOut, setCheckOut] = useState(initialCheckOut);
+  const [guests, setGuests] = useState(initialGuests);
   const [pricePreview, setPricePreview] = useState(null);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState(null);
@@ -271,6 +281,22 @@ const PropertyDetails = () => {
 
           <motion.div variants={fadeUp} className="pb-6 border-b border-gray-200">
              <h3 className="text-xl font-bold text-gray-900 mb-4">About this place</h3>
+             
+             <div className="flex gap-8 mb-6 p-4 bg-gray-50 rounded-xl">
+               <div>
+                 <p className="text-sm text-gray-500 uppercase font-bold tracking-wider mb-1">Check-in</p>
+                 <p className="text-gray-900 font-medium">
+                   {property.checkInTime ? formatTimeToAMPM(property.checkInTime) : 'Not specified'}
+                 </p>
+               </div>
+               <div>
+                 <p className="text-sm text-gray-500 uppercase font-bold tracking-wider mb-1">Checkout</p>
+                 <p className="text-gray-900 font-medium">
+                   {property.checkOutTime ? formatTimeToAMPM(property.checkOutTime) : 'Not specified'}
+                 </p>
+               </div>
+             </div>
+
              <p className="text-gray-600 whitespace-pre-wrap leading-relaxed">
                {property.description}
              </p>
@@ -286,6 +312,29 @@ const PropertyDetails = () => {
                  </div>
                ))}
              </div>
+           </motion.div>
+
+          <motion.div variants={fadeUp} className="pb-6 border-b border-gray-200">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Where you'll be</h3>
+            
+            {(() => {
+              const lat = Number(property.location?.latitude);
+              const lng = Number(property.location?.longitude);
+              const isValid = !isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180 && (lat !== 0 || lng !== 0);
+              
+              return isValid ? (
+                <>
+                  <PropertyMap latitude={lat} longitude={lng} />
+                  <p className="mt-4 text-gray-600">
+                    {property.location.city}, {property.location.state}, {property.location.country}
+                  </p>
+                </>
+              ) : (
+                <div className="bg-gray-50 border rounded-2xl p-8 text-center">
+                  <p className="text-gray-500 font-medium">Location information is currently unavailable.</p>
+                </div>
+              );
+            })()}
           </motion.div>
           
         </motion.div>
