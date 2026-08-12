@@ -191,7 +191,7 @@ const Messages = () => {
               return (
                 <div 
                   key={conv._id}
-                  onClick={() => navigate(`/messages/${conv._id}`)}
+                  onClick={() => navigate(isHost ? `/host/messages/${conv._id}` : `/messages/${conv._id}`)}
                   className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors flex gap-4 ${isActive ? 'bg-brand-50 hover:bg-brand-50' : ''}`}
                 >
                   <img 
@@ -243,7 +243,7 @@ const Messages = () => {
             {/* Chat Header */}
             <div className="h-16 px-4 border-b border-gray-200 flex items-center gap-4 bg-white shrink-0">
               <button 
-                onClick={() => navigate('/messages')}
+                onClick={() => navigate(isHost ? '/host/messages' : '/messages')}
                 className="md:hidden p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-full"
               >
                 <ArrowLeft className="w-5 h-5" />
