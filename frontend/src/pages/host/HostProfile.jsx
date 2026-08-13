@@ -6,22 +6,27 @@ import { hostApi } from '../../api/hostApi';
 import { fadeUp, staggerContainer } from '../../animations/motionVariants';
 
 const HostProfile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
+    location: user?.location || '',
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await hostApi.updateProfile(formData);
+      const res = await hostApi.updateProfile(formData);
+      if (res.success) {
+        updateUser(res.data);
+      } else {
+        updateUser(formData); // Fallback if API structure differs slightly
+      }
       setIsEditing(false);
       alert('Profile updated successfully');
-      // In a real app, we'd update AuthContext user here too.
     } catch (err) {
       alert('Failed to update profile');
     } finally {
@@ -80,6 +85,16 @@ const HostProfile = () => {
                 className="w-full p-4 border rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none" 
               />
             </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
+              <input 
+                type="text" 
+                name="location" 
+                value={formData.location} 
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })} 
+                className="w-full p-4 border rounded-xl focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none" 
+              />
+            </div>
             <button 
               type="submit" 
               disabled={isLoading}
@@ -127,7 +142,7 @@ const HostProfile = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-500 font-medium">Location</div>
-                <div className="font-bold text-gray-900">Earth</div>
+                <div className="font-bold text-gray-900">{user?.location || 'Not provided'}</div>
               </div>
             </div>
           </div>

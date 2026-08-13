@@ -17,7 +17,6 @@ const navItems = [
 
 const secondaryItems = [
   { name: 'Profile', path: '/host/profile', icon: User },
-  { name: 'Settings', path: '/host/settings', icon: Settings },
 ];
 
 const HostSidebar = () => {

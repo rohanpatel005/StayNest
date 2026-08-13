@@ -14,9 +14,7 @@ const navItems = [
   { name: 'Reviews', path: '/reviews', icon: Star },
 ];
 
-const secondaryItems = [
-  { name: 'Profile', path: '/guest/profile', icon: User },
-];
+const secondaryItems = [];
 
 const GuestSidebar = () => {
   const location = useLocation();

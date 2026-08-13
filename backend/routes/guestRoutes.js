@@ -6,6 +6,7 @@ const {
   addToWishlist,
   removeFromWishlist,
   getTrips,
+  getCompletedTrips,
   getTrip,
   pricePreview,
   createOrder,
@@ -33,6 +34,8 @@ router.route('/bookings/price-preview')
   .post(pricePreview);
 router.route('/bookings/create-order')
   .post(createOrder);
+router.route('/bookings/completed')
+  .get(getCompletedTrips);
 router.route('/bookings')
   .get(getTrips);
 router.route('/bookings/:id')

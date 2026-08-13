@@ -116,6 +116,26 @@ exports.getTrip = async (req, res) => {
   }
 };
 
+exports.getCompletedTrips = async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const bookings = await Booking.find({
+      guest: req.user._id,
+      $or: [
+        { status: 'COMPLETED' },
+        { status: 'CONFIRMED', checkOut: { $lt: currentDate } }
+      ]
+    })
+      .populate('listing', 'title images location')
+      .populate('host', 'name email profileImage')
+      .sort('-checkOut');
+    
+    res.status(200).json({ success: true, data: bookings });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
 const pricingService = require('../services/pricingService');
 const availabilityService = require('../services/availabilityService');
 

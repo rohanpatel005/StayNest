@@ -68,12 +68,12 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, location } = req.body;
     
     // Do NOT allow changing role or email easily here
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { name, phone },
+      { name, phone, location },
       { new: true, runValidators: true }
     ).select('-password');
 

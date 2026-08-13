@@ -5,6 +5,7 @@ import { Star, MapPin, Users, Bed, Bath, Home, ChevronLeft, ChevronRight, X, Hea
 import api from '../../api/axios';
 import { guestApi } from '../../api/guestApi';
 import { paymentApi } from '../../api/paymentApi';
+import { reviewApi } from '../../api/reviewApi';
 import PageLoader from '../../components/PageLoader/PageLoader';
 import { staggerContainer, fadeUp } from '../../animations/motionVariants';
 import PropertyMap from '../../components/map/PropertyMap';
@@ -26,6 +27,7 @@ const PropertyDetails = () => {
   const locationObj = useLocation();
 
   const [property, setProperty] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,17 +50,23 @@ const PropertyDetails = () => {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   useEffect(() => {
-    const fetchProperty = async () => {
+    const fetchPropertyData = async () => {
       try {
-        const res = await api.get(`/listings/public/${id}`);
-        setProperty(res.data.data);
+        const [propRes, revRes] = await Promise.all([
+          api.get(`/listings/public/${id}`),
+          reviewApi.getListingReviews(id)
+        ]);
+        setProperty(propRes.data.data);
+        if (revRes.success) {
+          setReviews(revRes.data);
+        }
       } catch (err) {
         setError('Unable to load property details.');
       } finally {
         setIsLoading(false);
       }
     };
-    fetchProperty();
+    fetchPropertyData();
   }, [id]);
 
   useEffect(() => {
@@ -335,6 +343,60 @@ const PropertyDetails = () => {
                 </div>
               );
             })()}
+          </motion.div>
+          
+          {/* Reviews Section */}
+          <motion.div variants={fadeUp} className="pb-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Star className="w-6 h-6 fill-gray-900 text-gray-900" />
+              <h3 className="text-2xl font-bold text-gray-900">
+                {property.rating?.average || 'New'} <span className="text-gray-500 font-normal text-lg">({property.rating?.count || 0} reviews)</span>
+              </h3>
+            </div>
+            
+            {reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {reviews.map((review) => (
+                  <div key={review._id} className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                        {review.guest?.profileImage ? (
+                          <img src={review.guest.profileImage} alt={review.guest.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-brand-100 text-brand-700 font-bold text-lg">
+                            {review.guest?.name?.charAt(0) || '?'}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900">{review.guest?.name}</h4>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <span>{new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />
+                      ))}
+                    </div>
+                    <p className="text-gray-700 leading-relaxed">{review.comment}</p>
+                    {review.hostReply && (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="font-bold text-gray-900 text-sm">Response from {property.host?.name}:</div>
+                        </div>
+                        <p className="text-gray-600 text-sm">{review.hostReply}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-100 rounded-2xl p-8 text-center">
+                <p className="text-gray-500 font-medium">No reviews yet. Be the first to review after your stay!</p>
+              </div>
+            )}
           </motion.div>
           
         </motion.div>

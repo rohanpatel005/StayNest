@@ -94,7 +94,13 @@ exports.createReview = async (req, res) => {
 
     const booking = await Booking.findOne({ _id: bookingId, guest: req.user._id });
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
-    if (booking.status !== 'completed') return res.status(400).json({ success: false, message: 'Can only review completed stays' });
+    
+    const isCompleted = booking.status === 'COMPLETED' || 
+                       (booking.status === 'CONFIRMED' && booking.checkOut < new Date());
+                       
+    if (!isCompleted) {
+      return res.status(400).json({ success: false, message: 'Can only review completed stays' });
+    }
 
     const existingReview = await Review.findOne({ booking: bookingId });
     if (existingReview) return res.status(400).json({ success: false, message: 'Review already exists for this booking' });
@@ -144,6 +150,18 @@ exports.getGuestReviews = async (req, res) => {
       .populate('listing', 'title images location')
       .sort('-createdAt');
     res.status(200).json({ success: true, data: reviews });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+exports.getReviewByBooking = async (req, res) => {
+  try {
+    const review = await Review.findOne({ booking: req.params.bookingId });
+    if (!review) {
+      return res.status(404).json({ success: false, message: 'Review not found for this booking' });
+    }
+    res.status(200).json({ success: true, data: review });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }

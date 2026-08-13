@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema({
     minlength: [8, 'Password must be at least 8 characters long'],
     select: false // Never return password by default
   },
+  phone: {
+    type: String,
+    trim: true
+  },
+  location: {
+    type: String,
+    trim: true,
+    default: 'Earth'
+  },
   role: {
     type: String,
     enum: ['guest', 'host'],

@@ -10,6 +10,11 @@ export const guestApi = {
     const response = await api.get('/guest/bookings');
     return response.data;
   },
+
+  getCompletedTrips: async () => {
+    const response = await api.get('/guest/bookings/completed');
+    return response.data;
+  },
   
   getTrip: async (id) => {
     const response = await api.get(`/guest/bookings/${id}`);

@@ -1,5 +1,7 @@
 const Listing = require('../models/Listing');
 const Booking = require('../models/Booking');
+const Review = require('../models/Review');
+const Wishlist = require('../models/Wishlist');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
@@ -158,6 +160,15 @@ exports.deleteListing = async (req, res) => {
     if (!listing) {
       return res.status(404).json({ success: false, message: 'Listing not found' });
     }
+
+    // Cascade deletes
+    const listingId = req.params.id;
+    await Booking.deleteMany({ listing: listingId });
+    await Review.deleteMany({ listing: listingId });
+    await Wishlist.updateMany(
+      { listings: listingId },
+      { $pull: { listings: listingId } }
+    );
 
     res.status(200).json({ success: true, message: 'Listing deleted successfully' });
   } catch (error) {
