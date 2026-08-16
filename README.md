@@ -1,6 +1,6 @@
 <div align="center">
   <br />
-    <img src="./frontend/public/favicon.svg" alt="StayNest" width="150" />
+    <img src="./frontend/public/favicon.png" alt="StayNest" width="150" />
   <br />
 
   <div>
