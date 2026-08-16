@@ -1,6 +1,6 @@
 <div align="center">
   <br />
-    <img src="https://upload.wikimedia.org/wikipedia/commons/6/69/Airbnb_Logo_B%C3%A9lo.svg" alt="StayNest" width="300" />
+    <img src="./frontend/public/favicon.svg" alt="StayNest" width="150" />
   <br />
 
   <div>
@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
   </div>
 
-  <h3 align="center">StayNest - Modern Airbnb Clone</h3>
+  <h3 align="center">StayNest</h3>
 
   <p align="center">
     A fully-featured, modern vacation rental platform built with the MERN stack.
@@ -31,7 +31,7 @@
 
 ## 🌟 Introduction
 
-**StayNest** is a comprehensive, full-stack web application inspired by Airbnb. It allows users to discover, book, and host unique accommodations around the world. Designed with a focus on user experience, performance, and modern web aesthetics, StayNest provides a seamless journey from searching for the perfect stay to secure booking and payment.
+**StayNest** is a comprehensive, full-stack web application. It allows users to discover, book, and host unique accommodations around the world. Designed with a focus on user experience, performance, and modern web aesthetics, StayNest provides a seamless journey from searching for the perfect stay to secure booking and payment.
 
 ## ✨ Features
 
